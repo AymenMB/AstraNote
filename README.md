@@ -215,11 +215,6 @@ A production-ready Retrieval-Augmented Generation (RAG) system built with Google
 
 ### Environment Setup
 
-1. **Navigate to the Project**
-
-   ```bash
-   cd "d:\al jaw\notebooklm"
-   ```
 
 2. **Create Environment Files**
 
