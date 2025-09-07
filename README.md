@@ -1,204 +1,191 @@
- # AstraNote — Enterprise RAG Platform
+# AstraNote — Enterprise RAG Platform
 
- [![Status](https://img.shields.io/badge/status-active-brightgreen)](https://github.com/your-org/notebooklm)
- [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Status](https://img.shields.io/badge/status-active-brightgreen)](https://github.com/your-org/notebooklm)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
- AstraNote (recommended name) is a production-ready Retrieval-Augmented Generation (RAG) platform that integrates Google NotebookLM with a FastAPI backend, a Next.js frontend, and PostgreSQL for durable storage. It provides secure user management, document ingestion, query history, and audit logging — built for teams and enterprises who want contextual Q&A over private knowledge.
+AstraNote (recommended name) is a production-ready Retrieval-Augmented Generation (RAG) platform that integrates Google NotebookLM with a FastAPI backend, a Next.js frontend, and PostgreSQL for durable storage. It provides secure user management, document ingestion, query history, and audit logging — built for teams and enterprises who want contextual Q&A over private knowledge.
 
- Why "AstraNote"? The name conveys a bright, organized beacon for knowledge — combining document-first workflows with reliable retrieval and generative capabilities.
+Why "AstraNote"? The name conveys a bright, organized beacon for knowledge — combining document-first workflows with reliable retrieval and generative capabilities.
 
- Quick name alternatives (pick one): AstraNote (recommended), NoteForge, LuminaRAG, AtlasNote, QueryNest, Notebase AI.
+Quick name alternatives (pick one): AstraNote (recommended), NoteForge, LuminaRAG, AtlasNote, QueryNest, Notebase AI.
 
- ---
+---
 
- ## Highlights
+## Highlights
 
- - Secure authentication (JWT + refresh tokens)
- - Document ingestion: PDF, text and other formats
- - RAG queries using Google NotebookLM as the LLM backend
- - Audit logs and query history for compliance
- - Dockerized for single-command local and production deployments
- - Interactive API docs (Swagger) and modern Next.js UI
+- Secure authentication (JWT + refresh tokens)
+- Document ingestion: PDF, text and other formats
+- RAG queries using Google NotebookLM as the LLM backend
+- Audit logs and query history for compliance
+- Dockerized for single-command local and production deployments
+- Interactive API docs (Swagger) and modern Next.js UI
 
- ## Local quickstart (Docker, recommended)
 
- Prerequisites
+Default URLs
 
- - Docker & Docker Compose
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API docs (Swagger): http://localhost:8000/docs
 
- Launch (PowerShell)
+## Local dev (no Docker) — backend + frontend
 
- ```powershell
- cd 'd:\al jaw\notebooklm'
- docker-compose up -d --build
- docker-compose ps
- docker-compose logs -f
- ```
+1.  Backend
 
- Default URLs
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1    # PowerShell
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
- - Frontend: http://localhost:3000
- - Backend API: http://localhost:8000
- - API docs (Swagger): http://localhost:8000/docs
+2.  Frontend
 
- ## Local dev (no Docker) — backend + frontend
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
- 1) Backend
+3.  Database (manual)
 
- ```powershell
- cd backend
- python -m venv .venv
- .\.venv\Scripts\Activate.ps1    # PowerShell
- pip install -r requirements.txt
- alembic upgrade head
- uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
- ```
+```powershell
+createdb notebooklm_rag
+psql -d notebooklm_rag -f database/init.sql
+```
 
- 2) Frontend
+## Configuration
 
- ```powershell
- cd frontend
- npm install
- npm run dev
- ```
+Copy and customize environment templates before running locally.
 
- 3) Database (manual)
+Backend (`backend/.env`)
 
- ```powershell
- createdb notebooklm_rag
- psql -d notebooklm_rag -f database/init.sql
- ```
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/notebooklm_rag
+SECRET_KEY=your-secret-key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+GOOGLE_APPLICATION_CREDENTIALS=./credentials/service-account.json
+GOOGLE_CLOUD_PROJECT=your-project-id
+REDIS_URL=redis://localhost:6379
+ENVIRONMENT=development
+LOG_LEVEL=INFO
+```
 
- ## Configuration
+Frontend (`frontend/.env.local`)
 
- Copy and customize environment templates before running locally.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_APP_NAME=AstraNote
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+```
 
- Backend (`backend/.env`)
+Notes: create a Google Cloud service account with NotebookLM API access, download the JSON key, and place it at `backend/credentials/service-account.json`.
 
- ```env
- DATABASE_URL=postgresql://user:password@localhost:5432/notebooklm_rag
- SECRET_KEY=your-secret-key
- ALGORITHM=HS256
- ACCESS_TOKEN_EXPIRE_MINUTES=30
- GOOGLE_APPLICATION_CREDENTIALS=./credentials/service-account.json
- GOOGLE_CLOUD_PROJECT=your-project-id
- REDIS_URL=redis://localhost:6379
- ENVIRONMENT=development
- LOG_LEVEL=INFO
- ```
+## Architecture
 
- Frontend (`frontend/.env.local`)
+- Frontend: Next.js (app router) + React components
+- Backend: FastAPI, pydantic schemas, SQLAlchemy & Alembic
+- LLM: Google NotebookLM via service account
+- Storage: PostgreSQL for metadata; extendable to vector stores
+- Cache: Redis for ephemeral cache and rate limiting (optional)
+- Orchestration: Docker Compose for local and production
 
- ```env
- NEXT_PUBLIC_API_URL=http://localhost:8000
- NEXT_PUBLIC_APP_NAME=AstraNote
- NEXTAUTH_SECRET=your-nextauth-secret
- NEXTAUTH_URL=http://localhost:3000
- ```
+## API summary
 
- Notes: create a Google Cloud service account with NotebookLM API access, download the JSON key, and place it at `backend/credentials/service-account.json`.
+Core endpoints
 
- ## Architecture
+- POST /api/auth/register — register
+- POST /api/auth/login — login (access & refresh tokens)
+- POST /api/documents/upload — upload documents
+- GET /api/documents — list documents
+- POST /api/queries — run a RAG query
+- GET /api/queries — list query history
 
- - Frontend: Next.js (app router) + React components
- - Backend: FastAPI, pydantic schemas, SQLAlchemy & Alembic
- - LLM: Google NotebookLM via service account
- - Storage: PostgreSQL for metadata; extendable to vector stores
- - Cache: Redis for ephemeral cache and rate limiting (optional)
- - Orchestration: Docker Compose for local and production
+See Swagger UI at `/docs` for full API details.
 
- ## API summary
+## Security & privacy
 
- Core endpoints
+- Short-lived JWT access tokens and refresh tokens
+- Role-based access control (admin / user)
+- Audit logs for uploads, queries, and admin actions
+- Optionally enable encryption at rest for uploaded files and secrets in production environments
 
- - POST /api/auth/register — register
- - POST /api/auth/login — login (access & refresh tokens)
- - POST /api/documents/upload — upload documents
- - GET /api/documents — list documents
- - POST /api/queries — run a RAG query
- - GET /api/queries — list query history
+## Tests
 
- See Swagger UI at `/docs` for full API details.
+Backend
 
- ## Security & privacy
+```powershell
+cd backend
+pytest tests/ -v
+```
 
- - Short-lived JWT access tokens and refresh tokens
- - Role-based access control (admin / user)
- - Audit logs for uploads, queries, and admin actions
- - Optionally enable encryption at rest for uploaded files and secrets in production environments
+Frontend
 
- ## Tests
+```powershell
+cd frontend
+npm test
+```
 
- Backend
+## Deployment
 
- ```powershell
- cd backend
- pytest tests/ -v
- ```
+Production with Docker Compose
 
- Frontend
+```powershell
+docker-compose -f docker-compose.prod.yml build
+docker-compose -f docker-compose.prod.yml up -d
+```
 
- ```powershell
- cd frontend
- npm test
- ```
+Cloud-ready: Cloud Run, GKE, AWS ECS, Azure Container Instances, or Kubernetes.
 
- ## Deployment
+## Troubleshooting
 
- Production with Docker Compose
+- Reinstall deps: `pip install -r backend/requirements.txt`, `npm install`
+- DB connection: verify `DATABASE_URL`, ensure DB is running
+- Google API: verify service account, enable NotebookLM API, check IAM
+- View logs:
 
- ```powershell
- docker-compose -f docker-compose.prod.yml build
- docker-compose -f docker-compose.prod.yml up -d
- ```
+```powershell
+docker-compose logs --tail=200 backend
+```
 
- Cloud-ready: Cloud Run, GKE, AWS ECS, Azure Container Instances, or Kubernetes.
+## Project layout (top-level)
 
- ## Troubleshooting
+```text
+backend/        # FastAPI app, models, services, tests
+frontend/       # Next.js UI
+database/       # schema and init scripts
+docker/         # helpers and Docker-related files
+docker-compose.yml
+docker-compose.prod.yml
+README.md
+```
 
- - Reinstall deps: `pip install -r backend/requirements.txt`, `npm install`
- - DB connection: verify `DATABASE_URL`, ensure DB is running
- - Google API: verify service account, enable NotebookLM API, check IAM
- - View logs:
+## Contributing
 
- ```powershell
- docker-compose logs --tail=200 backend
- ```
+1.  Fork
+2.  Create a feature branch
+3.  Add tests
+4.  Open a PR with a clear description
 
- ## Project layout (top-level)
+High-impact contributions: additional ingestion parsers, vector store integrations, enterprise auth connectors, and UX improvements for query workflows.
 
- ```text
- backend/        # FastAPI app, models, services, tests
- frontend/       # Next.js UI
- database/       # schema and init scripts
- docker/         # helpers and Docker-related files
- docker-compose.yml
- docker-compose.prod.yml
- README.md
- ```
+## License
 
- ## Contributing
+MIT — see `LICENSE`.
 
- 1. Fork
- 2. Create a feature branch
- 3. Add tests
- 4. Open a PR with a clear description
+---
 
- High-impact contributions: additional ingestion parsers, vector store integrations, enterprise auth connectors, and UX improvements for query workflows.
+Next steps I can help with:
 
- ## License
+- Rename project files and metadata to your chosen app name (package.json, Next app title, README references).
+- Add a short CONTRIBUTING.md and CODE_OF_CONDUCT.md.
+- Insert a screenshot or demo GIF into the README.
 
- MIT — see `LICENSE`.
+Pick the name you prefer (AstraNote recommended) and tell me which follow-up you'd like next.
 
- ---
-
- Next steps I can help with:
-
- - Rename project files and metadata to your chosen app name (package.json, Next app title, README references).
- - Add a short CONTRIBUTING.md and CODE_OF_CONDUCT.md.
- - Insert a screenshot or demo GIF into the README.
-
- Pick the name you prefer (AstraNote recommended) and tell me which follow-up you'd like next.
 # NotebookLM RAG System
 
 A production-ready Retrieval-Augmented Generation (RAG) system built with Google's NotebookLM API, featuring a FastAPI backend, React frontend, and PostgreSQL database.
@@ -214,7 +201,6 @@ A production-ready Retrieval-Augmented Generation (RAG) system built with Google
 - Google Cloud Account with NotebookLM API access
 
 ### Environment Setup
-
 
 2. **Create Environment Files**
 
